@@ -100,13 +100,3 @@ def _save_to_wav(audio_data, output_filename):
         wave_file.setsampwidth(SAMPLE_WIDTH_BYTES)
         wave_file.setframerate(SAMPLE_RATE)
         wave_file.writeframes(audio_int16.tobytes())
-
-
-# --- Simple manual test (no GUI yet) ---
-if __name__ == "__main__":
-    import time
-
-    stream, recording_frames, is_recording = start_recording()
-    time.sleep(5)  # record for 5 seconds
-    success = stop_recording(
-        stream, recording_frames, is_recording, "student_recording.wav")

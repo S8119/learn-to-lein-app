@@ -12,7 +12,7 @@ root.title(ROOT_TITLE)
 root.geometry(ROOT_GEOMETRY)
 root.configure(bg=ROOT_BG_COLOR)
 
-# The ONE persistent copy of recording state
+# The one persistent copy of recording state
 root.recording_state = RecordingState()
 
 record_button = create_record_button(root)
