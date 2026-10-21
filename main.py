@@ -1,4 +1,3 @@
-# main.py
 import tkinter as tk
 
 from theme import ROOT_BG_COLOR
@@ -9,9 +8,8 @@ from upload_button import create_upload_button, handle_upload_button_click
 from pasuk_display import create_pasuk_display
 from record_button import (create_record_button, handle_record_button_click,
                            resize_record_button, redraw_record_button)
-from continue_button import (create_continue_button, handle_continue_button_click,
-                             hide_continue_button)
-from feedback_label import create_feedback_label, hide_feedback_label
+from continue_button import create_continue_button, handle_continue_button_click
+from feedback_label import create_feedback_label
 from voice_recorder import RecordingState
 
 ROOT_TITLE = "Learn To Lein App"
@@ -19,53 +17,54 @@ ROOT_GEOMETRY = "900x600"
 ROOT_MIN_WIDTH = 640
 ROOT_MIN_HEIGHT = 420
 
-root = tk.Tk()
-root.title(ROOT_TITLE)
-root.geometry(ROOT_GEOMETRY)
-root.minsize(ROOT_MIN_WIDTH, ROOT_MIN_HEIGHT)
-root.configure(bg=ROOT_BG_COLOR)
 
-# The one persistent copy of recording state
-root.recording_state = RecordingState()
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title(ROOT_TITLE)
+        self.geometry(ROOT_GEOMETRY)
+        self.minsize(ROOT_MIN_WIDTH, ROOT_MIN_HEIGHT)
+        self.configure(bg=ROOT_BG_COLOR)
 
-# --- Create components ---
-logo = create_logo(root)
-upload_button = create_upload_button(root)
-pasuk_display = create_pasuk_display(root)
-record_button = create_record_button(root)
-continue_button = create_continue_button(root)
-feedback_label = create_feedback_label(root)
+        self.recording_state = RecordingState()
 
-# --- Place the visible components ---
-logo.place(**LOGO_PLACEMENT)
-upload_button.place(**UPLOAD_BUTTON_PLACEMENT)
-pasuk_display.place(**PASUK_DISPLAY_PLACEMENT)
-record_button.place(**RECORD_BUTTON_PLACEMENT)
+        self.logo = create_logo(self)
+        self.upload_button = create_upload_button(self)
+        self.pasuk_display = create_pasuk_display(self)
+        self.record_button = create_record_button(self)
+        self.continue_button = create_continue_button(self)
+        self.feedback_label = create_feedback_label(self)
 
-# --- Event handlers ---
-def on_root_resize(event):
-    # <Configure> on root also fires for every child widget, so only react
-    # when the event is actually about the root window.
-    if event.widget is root:
-        resize_record_button(record_button, event.height)
+        self.logo.place(**LOGO_PLACEMENT)
+        self.upload_button.place(**UPLOAD_BUTTON_PLACEMENT)
+        self.pasuk_display.place(**PASUK_DISPLAY_PLACEMENT)
+        self.record_button.place(**RECORD_BUTTON_PLACEMENT)
 
-def on_record_button_resize(event):
-    redraw_record_button(record_button, root.recording_state.is_recording)
+        self.bind("<Configure>", self._on_resize)
+        self.record_button.bind("<Configure>", self._on_record_button_resize)
+        self.record_button.bind("<Button-1>", self._on_record_click)
+        self.upload_button.bind("<Button-1>", self._on_upload_click)
+        self.continue_button.bind("<Button-1>", self._on_continue_click)
 
-def on_record_click(event):
-    root.recording_state = handle_record_button_click(record_button, root.recording_state)
+    def _on_resize(self, event):
+        # <Configure> on the window also fires for every child widget, so
+        # only react when the event is actually about this window.
+        if event.widget is self:
+            resize_record_button(self.record_button, event.height)
 
-def on_upload_click(event):
-    handle_upload_button_click(upload_button)
+    def _on_record_button_resize(self, event):
+        redraw_record_button(self.record_button, self.recording_state.is_recording)
+
+    def _on_record_click(self, event):
+        self.recording_state = handle_record_button_click(
+            self.record_button, self.recording_state)
+
+    def _on_upload_click(self, event):
+        handle_upload_button_click(self.upload_button)
+
+    def _on_continue_click(self, event):
+        handle_continue_button_click(self.continue_button)
 
 
-def on_continue_click(event):
-    handle_continue_button_click(continue_button)
-
-root.bind("<Configure>", on_root_resize)
-record_button.bind("<Configure>", on_record_button_resize)
-record_button.bind("<Button-1>", on_record_click)
-upload_button.bind("<Button-1>", on_upload_click)
-continue_button.bind("<Button-1>", on_continue_click)
-
-root.mainloop()
+if __name__ == "__main__":
+    App().mainloop()
