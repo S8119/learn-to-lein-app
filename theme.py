@@ -1,15 +1,20 @@
 import sys
+from tkinter import font as tkfont
 
-ROOT_BG_COLOR = "#a9c9ea"
-NAVY_COLOR = "#0b1f4e"
-WHITE_COLOR = "white"
-GREEN_COLOR = "#00b050"
-BLUE_COLOR = "#0070c0"
-LIGHT_GRAY_COLOR = "#e4e7eb"
-GRAY_BORDER_COLOR = "#8c96a3"
-DARK_TEXT_COLOR = "#1f2933"
-FEEDBACK_BG_COLOR = "#d9f2d9"
-FEEDBACK_TEXT_COLOR = "#2e8b3d"
+ROOT_BG_COLOR = "#F7F4EC"
+NAVY_COLOR = "#1B365D"
+GOLD_COLOR = "#C4A35A"
+WHITE_COLOR = "#FFFFFF"
+CARD_BORDER_COLOR = "#E2D9C8"
+MUTED_TEXT_COLOR = "#5C6570"
+DARK_TEXT_COLOR = "#1A1A1A"
+RECORDING_COLOR = "#C0392B"
+SUCCESS_COLOR = "#2F6F4E"
+FEEDBACK_BG_COLOR = "#E7F2EA"
+FEEDBACK_TEXT_COLOR = "#2F6F4E"
+
+HOVER_DARKEN = 0.92
+PRESS_DARKEN = 0.84
 
 # Use each operating system's native UI font so the app looks at home.
 if sys.platform == "win32":
@@ -18,3 +23,29 @@ elif sys.platform == "darwin":
     FONT_FAMILY = "Helvetica Neue"
 else:
     FONT_FAMILY = "DejaVu Sans"
+
+# Prefer a face that places nikkud well; fall back if it is not installed.
+HEBREW_FONT_CANDIDATES = (
+    "David",
+    "Gisha",
+    "Narkisim",
+    "Times New Roman",
+    FONT_FAMILY
+)
+
+
+def darken_hex(color, factor=HOVER_DARKEN):
+    """Returns a darker hex color. factor=1.0 is unchanged; 0.0 is black."""
+    color = color.lstrip("#")
+    red = int(int(color[0:2], 16) * factor)
+    green = int(int(color[2:4], 16) * factor)
+    blue = int(int(color[4:6], 16) * factor)
+    return f"#{red:02x}{green:02x}{blue:02x}"
+
+
+def hebrew_font_family(root=None):
+    available = set(tkfont.families(root))
+    for name in HEBREW_FONT_CANDIDATES:
+        if name in available:
+            return name
+    return FONT_FAMILY

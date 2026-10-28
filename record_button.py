@@ -1,6 +1,7 @@
 import tkinter as tk
-from theme import ROOT_BG_COLOR, NAVY_COLOR, WHITE_COLOR
-from drawing import create_rounded_rectangle, resize_rounded_rectangle
+from theme import ROOT_BG_COLOR, NAVY_COLOR, WHITE_COLOR, RECORDING_COLOR
+from drawing import (create_rounded_rectangle, resize_rounded_rectangle,
+                     set_canvas_fills)
 from layout import RECORD_BUTTON_HEIGHT_RATIO
 from voice_recorder import start_recording, stop_recording, RecordingState
 
@@ -25,8 +26,8 @@ STOP_SQUARE_RATIO = 0.32
 
 def create_record_button(parent):
     """
-    Creates the dark-blue rounded record/stop button. Its size and icon are
-    filled in by redraw_record_button once the window gives it a size.
+    Creates the rounded record/stop button. Its size and icon are filled in
+    by redraw_record_button once the window gives it a size.
     """
     record_button = tk.Canvas(
         parent,
@@ -36,8 +37,10 @@ def create_record_button(parent):
         highlightthickness=0,
         cursor="hand2"
     )
-    create_rounded_rectangle(record_button, 0, 0, 1, 1, 1,
-                             fill=NAVY_COLOR, outline="", tags="background")
+    create_rounded_rectangle(
+        record_button, 0, 0, 1, 1, 1,
+        fill=NAVY_COLOR, outline="", tags="background")
+    set_canvas_fills(record_button, NAVY_COLOR)
     return record_button
 
 
@@ -51,14 +54,17 @@ def redraw_record_button(record_button, is_recording):
     """Resizes the background to fit the button, then redraws the icon."""
     width = record_button.winfo_width()
     height = record_button.winfo_height()
-    resize_rounded_rectangle(record_button, "background", 0, 0, width, height,
-                             min(width, height) * CORNER_RADIUS_RATIO)
+    fill = RECORDING_COLOR if is_recording else NAVY_COLOR
+    resize_rounded_rectangle(
+        record_button, "background", 0, 0, width, height,
+        min(width, height) * CORNER_RADIUS_RATIO)
+    set_canvas_fills(record_button, fill)
     set_record_button_icon(record_button, is_recording)
 
 
 def handle_record_button_click(record_button, state):
     new_state = toggle_recording(state)
-    set_record_button_icon(record_button, new_state.is_recording)
+    redraw_record_button(record_button, new_state.is_recording)
     return new_state
 
 
@@ -69,11 +75,13 @@ def toggle_recording(state):
     """
     if not state.is_recording:
         stream, recording_frames, is_recording = start_recording()
-        return RecordingState(is_recording=is_recording, stream=stream,
-                              recording_frames=recording_frames)
+        return RecordingState(
+            is_recording=is_recording, stream=stream,
+            recording_frames=recording_frames)
 
-    success = stop_recording(state.stream, state.recording_frames,
-                             state.is_recording, OUTPUT_FILENAME)
+    success = stop_recording(
+        state.stream, state.recording_frames,
+        state.is_recording, OUTPUT_FILENAME)
     if success:
         print("Recording saved successfully.")
     else:
@@ -123,7 +131,6 @@ def draw_microphone_icon(canvas):
     stem_bottom = origin_y + size * MIC_STEM_BOTTOM
     base_half_width = size * MIC_BASE_HALF_WIDTH
 
-    # Capsule (the part you speak into)
     create_rounded_rectangle(
         canvas,
         center_x - capsule_half_width, capsule_top,
@@ -131,14 +138,12 @@ def draw_microphone_icon(canvas):
         capsule_half_width,
         fill=ICON_COLOR, outline="", tags="icon"
     )
-    # Cradle: the lower half of an ellipse wrapped around the capsule
     canvas.create_arc(
         center_x - cradle_half_width, cradle_top,
         center_x + cradle_half_width, cradle_bottom,
         start=180, extent=180, style="arc",
         outline=ICON_COLOR, width=line_width, tags="icon"
     )
-    # Stem and base
     canvas.create_line(
         center_x, cradle_bottom, center_x, stem_bottom,
         fill=ICON_COLOR, width=line_width, capstyle="round", tags="icon"
