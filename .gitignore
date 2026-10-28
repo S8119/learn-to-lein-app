@@ -1,0 +1,20 @@
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+
+# Recordings created while using the app
+*.wav
+
+# PyCharm / IDE
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
