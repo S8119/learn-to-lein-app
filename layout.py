@@ -13,10 +13,18 @@ UPLOAD_BUTTON_PLACEMENT = dict(
 PASUK_DISPLAY_PLACEMENT = dict(
     relx=MARGIN_X, rely=0.14, relwidth=1 - 2 * MARGIN_X, relheight=0.50, anchor="nw")
 
+# Teacher play sits on the lower-left of the pasuk card.
+TEACHER_PLAY_BUTTON_PLACEMENT = dict(
+    relx=MARGIN_X + 0.015, rely=0.62, anchor="sw")
+
 # The record button's width and height are set in pixels by main.py so it
 # stays a perfect square. Only its position is given here.
 RECORD_BUTTON_PLACEMENT = dict(relx=0.5, rely=0.68, anchor="n")
 RECORD_BUTTON_HEIGHT_RATIO = 0.16   # side length as a fraction of window height
+
+# Student play sits to the right of the microphone.
+STUDENT_PLAY_BUTTON_PLACEMENT = dict(relx=0.68, rely=0.72, anchor="n")
+PLAY_BUTTON_HEIGHT_RATIO = 0.09
 
 TIMER_LABEL_PLACEMENT = dict(relx=0.5, rely=0.86, anchor="n")
 

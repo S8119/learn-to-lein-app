@@ -10,8 +10,8 @@ WAV_EXTENSION = ".wav"
 def upload_audio_file(parent):
     """
     Opens a file dialog so the user can choose the teacher's WAV recording.
-    Copies it into TEACHER_DIR under its original name. Returns that name
-    for display, or None if the user cancelled or the copy failed.
+    Copies it into TEACHER_DIR under its original name. Returns the
+    destination path, or None if the user cancelled or the copy failed.
     """
     window = parent.winfo_toplevel()
     chosen = filedialog.askopenfilename(
@@ -44,4 +44,11 @@ def upload_audio_file(parent):
             )
             return None
 
-    return source_path.name
+    return dest_path
+
+
+def delete_teacher_recordings():
+    if not TEACHER_DIR.exists():
+        return
+    for path in TEACHER_DIR.glob("*.wav"):
+        path.unlink(missing_ok=True)

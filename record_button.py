@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import tkinter as tk
 from theme import ROOT_BG_COLOR, NAVY_COLOR, WHITE_COLOR, RECORDING_COLOR
 from drawing import (create_rounded_rectangle, resize_rounded_rectangle,
@@ -87,6 +89,10 @@ def toggle_recording(state):
     else:
         print("Recording was not saved.")
     return RecordingState()
+
+
+def delete_student_recording():
+    Path(OUTPUT_FILENAME).unlink(missing_ok=True)
 
 
 def set_record_button_icon(record_button, is_recording):
