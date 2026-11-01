@@ -36,9 +36,10 @@ def create_upload_button(parent):
 
 
 def handle_upload_button_click(upload_button):
-    filename = upload_audio_file(upload_button)
-    if filename is not None:
-        set_upload_button_filename(upload_button, filename)
+    dest_path = upload_audio_file(upload_button)
+    if dest_path is not None:
+        set_upload_button_filename(upload_button, dest_path.name)
+    return dest_path
 
 
 def set_upload_button_filename(upload_button, filename):
