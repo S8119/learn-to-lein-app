@@ -16,14 +16,14 @@ from record_button import (create_record_button, handle_record_button_click,
                            resize_record_button, redraw_record_button,
                            OUTPUT_FILENAME, delete_student_recording)
 from audio_uploader import delete_teacher_recordings
-from continue_button import create_continue_button, handle_continue_button_click
-from feedback_label import create_feedback_label
 from timer_label import create_timer_label, start_timer_label, stop_timer_label
 from play_button import (create_play_button, resize_play_button,
                          redraw_play_button, set_play_button_enabled,
                          handle_play_button_click, disable_play_buttons,
                          restore_play_buttons)
 from audio_player import stop_playback
+from trop_display import (create_trop_display, hide_trop_display,
+                          update_trop_display)
 from voice_recorder import RecordingState
 
 ROOT_TITLE = "Learn to Lein"
@@ -41,16 +41,15 @@ def enable_windows_dpi_awareness():
     This tells Windows to draw at the real pixel size instead. Linux and
     macOS skip it; they do not have that stretch-to-scale behavior.
     """
-    if sys.platform != "win32":
-        return
-    try:
-        # 2 = process per-monitor DPI aware
-        ctypes.windll.shcore.SetProcessDpiAwareness(2)
-    except (AttributeError, OSError):
+    if sys.platform == "win32":
         try:
-            ctypes.windll.user32.SetProcessDPIAware()
+            # 2 = process per-monitor DPI aware
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)
         except (AttributeError, OSError):
-            pass
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except (AttributeError, OSError):
+                pass
 
 
 class App(tk.Tk):
@@ -73,9 +72,8 @@ class App(tk.Tk):
         self.record_button = create_record_button(self)
         self.teacher_play_button = create_play_button(self)
         self.student_play_button = create_play_button(self)
-        self.continue_button = create_continue_button(self)
-        self.feedback_label = create_feedback_label(self)
         self.timer_label = create_timer_label(self)
+        self.trop_display = create_trop_display(self)
 
         self.logo.place(**LOGO_PLACEMENT)
         self.upload_button.place(**UPLOAD_BUTTON_PLACEMENT)
@@ -92,7 +90,6 @@ class App(tk.Tk):
             "<Configure>", lambda event: redraw_play_button(self.student_play_button))
         bind_clickable(self.record_button, self._on_record_click, NAVY_COLOR)
         bind_clickable(self.upload_button, self._on_upload_click, WHITE_COLOR)
-        bind_clickable(self.continue_button, self._on_continue_click, SUCCESS_COLOR)
         bind_clickable(self.teacher_play_button, self._on_teacher_play_click, SUCCESS_COLOR)
         bind_clickable(self.student_play_button, self._on_student_play_click, SUCCESS_COLOR)
         disable_play_buttons(self.teacher_play_button, self.student_play_button)
@@ -116,12 +113,17 @@ class App(tk.Tk):
             start_timer_label(self.timer_label)
             disable_play_buttons(
                 self.teacher_play_button, self.student_play_button)
+            hide_trop_display(self.trop_display)
         else:
             stop_timer_label(self.timer_label)
             student_path = Path(OUTPUT_FILENAME)
             if student_path.exists():
                 set_play_button_enabled(
                     self.student_play_button, True, student_path)
+                update_trop_display(
+                    self.trop_display,
+                    self.teacher_play_button.audio_path,
+                    student_path)
             restore_play_buttons(
                 self.teacher_play_button, self.student_play_button)
 
@@ -132,15 +134,16 @@ class App(tk.Tk):
                 self.teacher_play_button,
                 not self.recording_state.is_recording,
                 dest_path)
+            update_trop_display(
+                self.trop_display,
+                dest_path,
+                self.student_play_button.audio_path)
 
     def _on_teacher_play_click(self, event):
         handle_play_button_click(self.teacher_play_button)
 
     def _on_student_play_click(self, event):
         handle_play_button_click(self.student_play_button)
-
-    def _on_continue_click(self, event):
-        handle_continue_button_click(self.continue_button)
 
     def _on_close(self):
         stop_playback()

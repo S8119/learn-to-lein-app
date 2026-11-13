@@ -59,9 +59,8 @@ def set_play_button_enabled(play_button, enabled, audio_path=None):
 
 
 def handle_play_button_click(play_button):
-    if not play_button.enabled or play_button.audio_path is None:
-        return
-    play_wav(play_button.audio_path)
+    if play_button.enabled and play_button.audio_path is not None:
+        play_wav(play_button.audio_path)
 
 
 def disable_play_buttons(*play_buttons):

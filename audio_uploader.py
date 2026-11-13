@@ -19,36 +19,32 @@ def upload_audio_file(parent):
         title="Upload teacher recording",
         filetypes=[("WAV audio", "*.wav")]
     )
-    if not chosen:
-        return None
-
-    source_path = Path(chosen)
-    if source_path.suffix.lower() != WAV_EXTENSION:
-        messagebox.showerror(
-            "Unsupported file",
-            "Please choose a .wav file.",
-            parent=window
-        )
-        return None
-
-    TEACHER_DIR.mkdir(exist_ok=True)
-    dest_path = TEACHER_DIR / source_path.name
-    if source_path.resolve() != dest_path.resolve():
-        try:
-            source_path.copy(dest_path)
-        except OSError as error:
+    dest_path = None
+    if chosen:
+        source_path = Path(chosen)
+        if source_path.suffix.lower() != WAV_EXTENSION:
             messagebox.showerror(
-                "Upload failed",
-                f"Could not copy the file:\n{error}",
+                "Unsupported file",
+                "Please choose a .wav file.",
                 parent=window
             )
-            return None
-
+        else:
+            TEACHER_DIR.mkdir(exist_ok=True)
+            dest_path = TEACHER_DIR / source_path.name
+            if source_path.resolve() != dest_path.resolve():
+                try:
+                    source_path.copy(dest_path)
+                except OSError as error:
+                    messagebox.showerror(
+                        "Upload failed",
+                        f"Could not copy the file:\n{error}",
+                        parent=window
+                    )
+                    dest_path = None
     return dest_path
 
 
 def delete_teacher_recordings():
-    if not TEACHER_DIR.exists():
-        return
-    for path in TEACHER_DIR.glob("*.wav"):
-        path.unlink(missing_ok=True)
+    if TEACHER_DIR.exists():
+        for path in TEACHER_DIR.glob("*.wav"):
+            path.unlink(missing_ok=True)

@@ -43,10 +43,9 @@ def stop_timer_label(timer_label):
 
 
 def _tick_timer_label(timer_label):
-    if timer_label.started_at is None:
-        return
-    elapsed = int(time.monotonic() - timer_label.started_at)
-    minutes, seconds = divmod(elapsed, 60)
-    timer_label.configure(text=f"{minutes}:{seconds:02d}")
-    timer_label.job = timer_label.after(
-        TICK_MS, lambda: _tick_timer_label(timer_label))
+    if timer_label.started_at is not None:
+        elapsed = int(time.monotonic() - timer_label.started_at)
+        minutes, seconds = divmod(elapsed, 60)
+        timer_label.configure(text=f"{minutes}:{seconds:02d}")
+        timer_label.job = timer_label.after(
+            TICK_MS, lambda: _tick_timer_label(timer_label))

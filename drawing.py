@@ -80,9 +80,9 @@ def bind_clickable(canvas, command, fill, tag="background"):
         was_pressed = canvas._pressed
         canvas._pressed = False
         canvas.itemconfigure(tag, fill=canvas.base_fill)
-        if not was_pressed or command is None:
-            return
-        if 0 <= event.x <= canvas.winfo_width() and 0 <= event.y <= canvas.winfo_height():
+        inside = (0 <= event.x <= canvas.winfo_width()
+                  and 0 <= event.y <= canvas.winfo_height())
+        if was_pressed and command is not None and inside:
             command(event)
 
     canvas.bind("<Enter>", on_enter)
