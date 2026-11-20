@@ -1,59 +1,49 @@
 import tkinter as tk
-from theme import (ROOT_BG_COLOR, WHITE_COLOR, GOLD_COLOR, NAVY_COLOR,
-                   MUTED_TEXT_COLOR, hebrew_font_family)
-from drawing import (create_rounded_rectangle, resize_rounded_rectangle,
-                     fit_font_size)
+from tkinter import font as tkfont
 
-# Stand-in for the one-pasuk prototype. Swap this when you pick a test pasuk.
-SAMPLE_PASUK = "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ׃"
-SAMPLE_CITATION = "בְּרֵאשִׁית א:א"
+from theme import ROOT_BG_COLOR, NAVY_COLOR, MUTED_TEXT_COLOR, hebrew_font_family
+from drawing import fit_font_size
 
-CORNER_RADIUS_RATIO = 0.04
-CITATION_HEIGHT_RATIO = 0.08
-CITATION_WIDTH_RATIO = 0.04
-PASUK_HEIGHT_RATIO = 0.16
-PASUK_WIDTH_RATIO = 0.055
+# Shema (Devarim 6:4) with nikkud only — no te'amim.
+SAMPLE_PASUK = "שְׁמַע יִשְׂרָאֵל יְהוָה אֱלֹהֵינוּ יְהוָה אֶחָד׃"
+SAMPLE_CITATION = "דְּבָרִים ו:ד"
+
+CITATION_HEIGHT_RATIO = 0.18
+CITATION_WIDTH_RATIO = 0.030
+PASUK_HEIGHT_RATIO = 0.28
+PASUK_WIDTH_RATIO = 0.028
+MAX_PASUK_PIXELS = 28
+MAX_CITATION_PIXELS = 14
 
 
 def create_pasuk_display(parent):
-    """
-    Creates the pasuk card: a rounded panel with a citation and the Hebrew
-    verse in a real Text widget (better wrapping and nikkud than canvas text).
-    """
-    pasuk_display = tk.Canvas(parent, bg=ROOT_BG_COLOR, highlightthickness=0)
-    create_rounded_rectangle(
-        pasuk_display, 0, 0, 1, 1, 1,
-        fill=WHITE_COLOR, outline=GOLD_COLOR, width=1, tags="background")
+    """Citation on the right; verse centered underneath. No card."""
+    pasuk_display = tk.Frame(parent, bg=ROOT_BG_COLOR)
+    hebrew = hebrew_font_family(parent)
 
     citation = tk.Label(
         pasuk_display,
         text=SAMPLE_CITATION,
-        bg=WHITE_COLOR,
+        bg=ROOT_BG_COLOR,
         fg=MUTED_TEXT_COLOR,
-        font=(hebrew_font_family(parent), 12),
-        anchor="e"
+        font=(hebrew, 11),
+        anchor="e",
+        justify="right",
     )
-    pasuk_text = tk.Text(
+    pasuk_label = tk.Label(
         pasuk_display,
-        wrap="word",
-        relief="flat",
-        borderwidth=0,
-        highlightthickness=0,
-        bg=WHITE_COLOR,
+        text=SAMPLE_PASUK,
+        bg=ROOT_BG_COLOR,
         fg=NAVY_COLOR,
-        cursor="arrow",
-        padx=12,
-        pady=8
+        font=(hebrew, 20),
+        anchor="center",
+        justify="center",
     )
-    pasuk_text.insert("1.0", SAMPLE_PASUK)
-    pasuk_text.tag_configure("pasuk", justify="center")
-    pasuk_text.tag_add("pasuk", "1.0", "end")
-    pasuk_text.configure(state="disabled")
 
-    pasuk_display.create_window(0, 0, window=citation, anchor="ne", tags="citation")
-    pasuk_display.create_window(0, 0, window=pasuk_text, anchor="n", tags="pasuk_text")
+    citation.pack(fill="x", padx=8)
+    pasuk_label.pack(fill="both", expand=True, padx=16, pady=(2, 4))
     pasuk_display.citation = citation
-    pasuk_display.pasuk_text = pasuk_text
+    pasuk_display.pasuk_label = pasuk_label
     pasuk_display.bind(
         "<Configure>", lambda event: redraw_pasuk_display(pasuk_display))
     return pasuk_display
@@ -62,34 +52,36 @@ def create_pasuk_display(parent):
 def redraw_pasuk_display(pasuk_display):
     width = pasuk_display.winfo_width()
     height = pasuk_display.winfo_height()
-    resize_rounded_rectangle(
-        pasuk_display, "background", 2, 2, width - 2, height - 2,
-        height * CORNER_RADIUS_RATIO)
+    if width < 2 or height < 2:
+        return
 
-    pad_x = max(20, int(width * 0.04))
-    pad_y = max(16, int(height * 0.08))
-    citation_space = max(22, int(height * 0.12))
-    inner_width = max(1, width - 2 * pad_x)
-    text_height = max(1, height - pad_y - citation_space - pad_y)
-
-    pasuk_display.coords("citation", width - pad_x, pad_y)
-    pasuk_display.coords("pasuk_text", width / 2, pad_y + citation_space)
-    pasuk_display.itemconfigure(
-        "pasuk_text", width=inner_width, height=text_height)
-
-    citation_size = fit_font_size(
-        width, height, CITATION_HEIGHT_RATIO, CITATION_WIDTH_RATIO)
-    pasuk_size = fit_font_size(
-        width, height, PASUK_HEIGHT_RATIO, PASUK_WIDTH_RATIO)
-    pasuk_display.citation.configure(
-        font=(hebrew_font_family(pasuk_display), citation_size))
-
-    pasuk_text = pasuk_display.pasuk_text
-    pasuk_text.configure(state="normal")
-    pasuk_text.tag_configure(
-        "pasuk",
-        justify="center",
-        font=(hebrew_font_family(pasuk_display), pasuk_size),
-        foreground=NAVY_COLOR
+    hebrew = hebrew_font_family(pasuk_display)
+    citation_size = max(
+        9,
+        min(
+            MAX_CITATION_PIXELS,
+            abs(fit_font_size(
+                width, height, CITATION_HEIGHT_RATIO, CITATION_WIDTH_RATIO)),
+        ),
     )
-    pasuk_text.configure(state="disabled")
+    pasuk_size = max(
+        14,
+        min(
+            MAX_PASUK_PIXELS,
+            abs(fit_font_size(
+                width, height, PASUK_HEIGHT_RATIO, PASUK_WIDTH_RATIO)),
+        ),
+    )
+
+    # Shrink until the full verse fits in the panel.
+    pasuk_font = tkfont.Font(family=hebrew, size=pasuk_size)
+    usable = max(80, width - 32)
+    while pasuk_size > 14 and pasuk_font.measure(SAMPLE_PASUK) > usable:
+        pasuk_size -= 1
+        pasuk_font = tkfont.Font(family=hebrew, size=pasuk_size)
+
+    pasuk_display.citation.configure(font=(hebrew, citation_size))
+    pasuk_display.pasuk_label.configure(
+        font=(hebrew, pasuk_size),
+        wraplength=usable,
+    )

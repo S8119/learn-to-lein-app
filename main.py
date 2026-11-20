@@ -1,10 +1,12 @@
 import ctypes
 import sys
+import threading
 import tkinter as tk
 
 from pathlib import Path
 
-from theme import ROOT_BG_COLOR, NAVY_COLOR, WHITE_COLOR, SUCCESS_COLOR
+from font_loader import load_bundled_hebrew_fonts
+from theme import ROOT_BG_COLOR, NAVY_COLOR, PANEL_COLOR
 from layout import (LOGO_PLACEMENT, UPLOAD_BUTTON_PLACEMENT,
                     PASUK_DISPLAY_PLACEMENT, RECORD_BUTTON_PLACEMENT,
                     TEACHER_PLAY_BUTTON_PLACEMENT, STUDENT_PLAY_BUTTON_PLACEMENT)
@@ -19,17 +21,19 @@ from audio_uploader import delete_teacher_recordings
 from timer_label import create_timer_label, start_timer_label, stop_timer_label
 from play_button import (create_play_button, resize_play_button,
                          redraw_play_button, set_play_button_enabled,
-                         handle_play_button_click, disable_play_buttons,
-                         restore_play_buttons)
+                         clear_play_button, handle_play_button_click,
+                         disable_play_buttons, restore_play_buttons,
+                         bind_play_button)
 from audio_player import stop_playback
-from trop_display import (create_trop_display, hide_trop_display,
-                          update_trop_display)
+from trop_display import (create_trop_display, place_trop_display,
+                          set_teacher_trop, update_trop_display)
+from audio_comparison import warm_up_pitch_tracker
 from voice_recorder import RecordingState
 
 ROOT_TITLE = "Learn to Lein"
-ROOT_GEOMETRY = "900x600"
-ROOT_MIN_WIDTH = 640
-ROOT_MIN_HEIGHT = 420
+ROOT_GEOMETRY = "920x680"
+ROOT_MIN_WIDTH = 700
+ROOT_MIN_HEIGHT = 520
 
 
 def enable_windows_dpi_awareness():
@@ -55,6 +59,7 @@ def enable_windows_dpi_awareness():
 class App(tk.Tk):
     def __init__(self):
         enable_windows_dpi_awareness()
+        load_bundled_hebrew_fonts()
         super().__init__()
         self.title(ROOT_TITLE)
         self.geometry(ROOT_GEOMETRY)
@@ -69,18 +74,21 @@ class App(tk.Tk):
         self.logo = create_logo(self)
         self.upload_button = create_upload_button(self)
         self.pasuk_display = create_pasuk_display(self)
-        self.record_button = create_record_button(self)
-        self.teacher_play_button = create_play_button(self)
-        self.student_play_button = create_play_button(self)
-        self.timer_label = create_timer_label(self)
         self.trop_display = create_trop_display(self)
+        self.record_button = create_record_button(self)
+        self.teacher_play_frame = create_play_button(self, "Teacher")
+        self.student_play_frame = create_play_button(self, "You")
+        self.teacher_play_button = self.teacher_play_frame.play_button
+        self.student_play_button = self.student_play_frame.play_button
+        self.timer_label = create_timer_label(self)
 
         self.logo.place(**LOGO_PLACEMENT)
         self.upload_button.place(**UPLOAD_BUTTON_PLACEMENT)
         self.pasuk_display.place(**PASUK_DISPLAY_PLACEMENT)
-        self.teacher_play_button.place(**TEACHER_PLAY_BUTTON_PLACEMENT)
+        place_trop_display(self.trop_display)
+        self.teacher_play_frame.place(**TEACHER_PLAY_BUTTON_PLACEMENT)
         self.record_button.place(**RECORD_BUTTON_PLACEMENT)
-        self.student_play_button.place(**STUDENT_PLAY_BUTTON_PLACEMENT)
+        self.student_play_frame.place(**STUDENT_PLAY_BUTTON_PLACEMENT)
 
         self.bind("<Configure>", self._on_resize)
         self.record_button.bind("<Configure>", self._on_record_button_resize)
@@ -89,18 +97,22 @@ class App(tk.Tk):
         self.student_play_button.bind(
             "<Configure>", lambda event: redraw_play_button(self.student_play_button))
         bind_clickable(self.record_button, self._on_record_click, NAVY_COLOR)
-        bind_clickable(self.upload_button, self._on_upload_click, WHITE_COLOR)
-        bind_clickable(self.teacher_play_button, self._on_teacher_play_click, SUCCESS_COLOR)
-        bind_clickable(self.student_play_button, self._on_student_play_click, SUCCESS_COLOR)
+        bind_clickable(self.upload_button, self._on_upload_click, PANEL_COLOR)
+        bind_play_button(self.teacher_play_frame, self._on_teacher_play_click)
+        bind_play_button(self.student_play_frame, self._on_student_play_click)
         disable_play_buttons(self.teacher_play_button, self.student_play_button)
+
+        # First pitch pass pays a one-time librosa cost; warm in the
+        # background so the window does not freeze on open.
+        threading.Thread(target=warm_up_pitch_tracker, daemon=True).start()
 
     def _on_resize(self, event):
         # <Configure> on the window also fires for every child widget, so
         # only react when the event is actually about this window.
         if event.widget is self:
             resize_record_button(self.record_button, event.height)
-            resize_play_button(self.teacher_play_button, event.height)
-            resize_play_button(self.student_play_button, event.height)
+            resize_play_button(self.teacher_play_frame, event.height)
+            resize_play_button(self.student_play_frame, event.height)
 
     def _on_record_button_resize(self, event):
         redraw_record_button(self.record_button, self.recording_state.is_recording)
@@ -113,7 +125,6 @@ class App(tk.Tk):
             start_timer_label(self.timer_label)
             disable_play_buttons(
                 self.teacher_play_button, self.student_play_button)
-            hide_trop_display(self.trop_display)
         else:
             stop_timer_label(self.timer_label)
             student_path = Path(OUTPUT_FILENAME)
@@ -130,14 +141,15 @@ class App(tk.Tk):
     def _on_upload_click(self, event):
         dest_path = handle_upload_button_click(self.upload_button)
         if dest_path is not None:
+            # New teacher take: clear the boy's old line and wait for a
+            # fresh recording against this teacher file.
+            delete_student_recording()
+            clear_play_button(self.student_play_button)
             set_play_button_enabled(
                 self.teacher_play_button,
                 not self.recording_state.is_recording,
                 dest_path)
-            update_trop_display(
-                self.trop_display,
-                dest_path,
-                self.student_play_button.audio_path)
+            set_teacher_trop(self.trop_display, dest_path)
 
     def _on_teacher_play_click(self, event):
         handle_play_button_click(self.teacher_play_button)

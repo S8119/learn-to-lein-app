@@ -1,31 +1,31 @@
 import tkinter as tk
-from theme import (ROOT_BG_COLOR, WHITE_COLOR, CARD_BORDER_COLOR,
-                   NAVY_COLOR, MUTED_TEXT_COLOR, FONT_FAMILY)
+
+from theme import (ROOT_BG_COLOR, PANEL_COLOR, NAVY_COLOR, MUTED_TEXT_COLOR,
+                   FONT_FAMILY, CARD_BORDER_COLOR)
 from drawing import create_rounded_rectangle, resize_rounded_rectangle, fit_font_size
 from audio_uploader import upload_audio_file
 
-TITLE_TEXT = "Upload recording"
+TITLE_TEXT = "Choose Teacher Recording"
 NO_FILE_TEXT = "No file chosen"
 
-CORNER_RADIUS_RATIO = 0.22
-MAIN_HEIGHT_RATIO = 0.34
-MAIN_WIDTH_RATIO = 0.075
-SUB_HEIGHT_RATIO = 0.22
-SUB_WIDTH_RATIO = 0.055
-MAIN_TEXT_Y_RATIO = 0.38
+CORNER_RADIUS_RATIO = 0.16
+MAIN_HEIGHT_RATIO = 0.36
+MAIN_WIDTH_RATIO = 0.055
+SUB_HEIGHT_RATIO = 0.24
+SUB_WIDTH_RATIO = 0.050
+MAIN_TEXT_Y_RATIO = 0.36
 SUB_TEXT_Y_RATIO = 0.70
 
 
 def create_upload_button(parent):
     """
-    Creates the upload button: a short title and a line for the current
-    teacher file (or "No file chosen" until one is picked).
+    Creates the upload control: short title plus the current teacher filename.
     """
     upload_button = tk.Canvas(
         parent, bg=ROOT_BG_COLOR, highlightthickness=0, cursor="hand2")
     create_rounded_rectangle(
         upload_button, 0, 0, 1, 1, 1,
-        fill=WHITE_COLOR, outline=CARD_BORDER_COLOR, width=1, tags="background")
+        fill=PANEL_COLOR, outline=CARD_BORDER_COLOR, width=1, tags="background")
     upload_button.create_text(
         0, 0, text=TITLE_TEXT, fill=NAVY_COLOR, tags="title_text")
     upload_button.create_text(

@@ -3,8 +3,8 @@ from theme import ROOT_BG_COLOR, NAVY_COLOR, FONT_FAMILY
 from drawing import fit_font_size
 
 WORDMARK = "Learn to Lein"
-TEXT_HEIGHT_RATIO = 0.50
-TEXT_WIDTH_RATIO = 0.11
+TEXT_HEIGHT_RATIO = 0.55
+TEXT_WIDTH_RATIO = 0.12
 
 
 def create_logo(parent):
@@ -15,7 +15,7 @@ def create_logo(parent):
         bg=ROOT_BG_COLOR,
         fg=NAVY_COLOR,
         anchor="w",
-        font=(FONT_FAMILY, 20, "bold")
+        font=(FONT_FAMILY, 22, "bold")
     )
     logo.bind("<Configure>", lambda event: redraw_logo(logo))
     return logo
