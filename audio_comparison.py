@@ -16,12 +16,12 @@ import librosa
 import numpy
 
 # How many dots we keep in the drawn trop line (left = start, right = end).
-COMPARISON_POINTS = 120
+COMPARISON_POINTS = 100
 # Ignore a clip that barely has any sung/spoken pitch.
 MIN_VOICED_FRAMES = 8
 SEMITONES_PER_OCTAVE = 12.0
-# Average neighboring dots so leftover tracker jitter is not the score.
-SMOOTH_WIDTH = 5
+# Average neighboring dots so the drawn trop is a tune, not tracker noise.
+SMOOTH_WIDTH = 13
 # How far one reader may drift in time from the other, as a fraction of
 # the pasuk. 0.30 means “up to about a third slower or faster locally.”
 ALIGN_BAND = 0.30
@@ -41,12 +41,21 @@ MIN_OFF_TUNE_POINTS = 3
 # Pitch range we bother looking for (men, boys, and women testing the app).
 MIN_PITCH_HZ = 70
 MAX_PITCH_HZ = 500
+# Pitch tracking does not need CD-quality audio. Working at 16 kHz is
+# much faster and still fine for voice.
+PITCH_SAMPLE_RATE = 16000
+PITCH_FRAME_LENGTH = 1024
+PITCH_HOP_LENGTH = 256
+
+# path -> (mtime_ns, size, shape-or-None)
+_SHAPE_CACHE = {}
 
 
-def load_mono_wav(path):
+def load_mono_wav(path, sample_rate=None):
     """Reads a WAV file as one channel of samples, plus how many per second."""
-    audio, sample_rate = librosa.load(str(Path(path)), sr=None, mono=True)
-    return audio, sample_rate
+    audio, loaded_rate = librosa.load(
+        str(Path(path)), sr=sample_rate, mono=True)
+    return audio, loaded_rate
 
 
 def estimate_pitch_hz(audio, sample_rate):
@@ -56,13 +65,15 @@ def estimate_pitch_hz(audio, sample_rate):
     librosa.pyin listens for a repeating sung note and also decides
     “is anyone actually voicing a note here?” Silence and consonants
     come back empty (NaN = “not a number”) so they do not invent a fake
-    note. This is much less jumpy than a homemade wobble search.
+    note.
     """
     pitch_hz, voiced_flag, _voiced_prob = librosa.pyin(
         audio,
         fmin=MIN_PITCH_HZ,
         fmax=MAX_PITCH_HZ,
-        sr=sample_rate
+        sr=sample_rate,
+        frame_length=PITCH_FRAME_LENGTH,
+        hop_length=PITCH_HOP_LENGTH
     )
     if voiced_flag is not None:
         pitch_hz = numpy.where(voiced_flag, pitch_hz, numpy.nan)
@@ -224,6 +235,41 @@ def trop_score(teacher_shape, student_shape):
     return max(0.0, min(100.0, percent))
 
 
+def load_pitch_shape(path):
+    """
+    Turns one WAV into a trop shape, or None if there is too little pitch.
+    Remembers the result for this file so we do not re-analyze the same
+    recording over and over.
+    """
+    path = Path(path)
+    resolved = str(path.resolve())
+    shape = None
+    if path.exists():
+        stat = path.stat()
+        cache_key = (resolved, stat.st_mtime_ns, stat.st_size)
+        cached = _SHAPE_CACHE.get(resolved)
+        if cached is not None and cached[0] == cache_key:
+            shape = cached[1]
+        else:
+            audio, sample_rate = load_mono_wav(path, sample_rate=PITCH_SAMPLE_RATE)
+            shape = pitch_shape(audio, sample_rate)
+            _SHAPE_CACHE[resolved] = (cache_key, shape)
+    return shape
+
+
+def warm_up_pitch_tracker():
+    """
+    Runs one tiny pitch pass so librosa's first real analysis is not the
+    slow “compile” hit during a boy's practice.
+    """
+    seconds = 0.35
+    tone = 0.1 * numpy.sin(
+        2 * numpy.pi * 180 * numpy.arange(int(PITCH_SAMPLE_RATE * seconds))
+        / PITCH_SAMPLE_RATE
+    ).astype(numpy.float32)
+    estimate_pitch_hz(tone, PITCH_SAMPLE_RATE)
+
+
 def compare_trop(teacher_path, student_path):
     """
     Compares trop (pitch shape) of two recordings.
@@ -232,10 +278,8 @@ def compare_trop(teacher_path, student_path):
     has too little voiced audio.
     The student shape is already lined up in time and key for drawing.
     """
-    teacher_audio, teacher_rate = load_mono_wav(teacher_path)
-    student_audio, student_rate = load_mono_wav(student_path)
-    teacher_shape = pitch_shape(teacher_audio, teacher_rate)
-    student_shape = pitch_shape(student_audio, student_rate)
+    teacher_shape = load_pitch_shape(teacher_path)
+    student_shape = load_pitch_shape(student_path)
     comparison = None
     if teacher_shape is not None and student_shape is not None:
         aligned_student = _match_key(

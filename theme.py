@@ -1,29 +1,37 @@
 import sys
 from tkinter import font as tkfont
 
-ROOT_BG_COLOR = "#F7F4EC"
+from font_loader import HEBREW_FAMILY_NAMES
+
+# Light parchment with navy + gold — warm, not muddy brown.
+ROOT_BG_COLOR = "#F7F2E7"
+PANEL_COLOR = "#FFFCF7"
 NAVY_COLOR = "#1B365D"
+ACCENT_BLUE = "#2F6FAD"
 GOLD_COLOR = "#C4A35A"
 WHITE_COLOR = "#FFFFFF"
-CARD_BORDER_COLOR = "#E2D9C8"
-MUTED_TEXT_COLOR = "#5C6570"
-DARK_TEXT_COLOR = "#1A1A1A"
+CARD_BORDER_COLOR = "#D9E0EA"
+MUTED_TEXT_COLOR = "#5C6B7A"
+DARK_TEXT_COLOR = "#1A2433"
 RECORDING_COLOR = "#C0392B"
 SUCCESS_COLOR = "#2F6F4E"
+GUIDE_LINE_COLOR = "#D5DCE6"
+# Cool slate for disabled controls — not brown.
+DISABLED_FILL = "#8A97A8"
 
 HOVER_DARKEN = 0.92
 PRESS_DARKEN = 0.84
 
-# Use each operating system's native UI font so the app looks at home.
 if sys.platform == "win32":
-    FONT_FAMILY = "Segoe UI"
+    FONT_FAMILY = "Candara"
 elif sys.platform == "darwin":
-    FONT_FAMILY = "Helvetica Neue"
+    FONT_FAMILY = "Avenir Next"
 else:
     FONT_FAMILY = "DejaVu Sans"
 
-# Prefer a face that places nikkud well; fall back if it is not installed.
 HEBREW_FONT_CANDIDATES = (
+    *HEBREW_FAMILY_NAMES,
+    "SBL Hebrew",
     "David",
     "Gisha",
     "Narkisim",

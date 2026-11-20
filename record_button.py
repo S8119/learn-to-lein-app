@@ -8,7 +8,7 @@ from layout import RECORD_BUTTON_HEIGHT_RATIO
 from voice_recorder import start_recording, stop_recording, RecordingState
 
 INITIAL_SIZE = 100
-CORNER_RADIUS_RATIO = 0.22
+CORNER_RADIUS_RATIO = 0.20
 ICON_COLOR = WHITE_COLOR
 OUTPUT_FILENAME = "student_recording.wav"
 

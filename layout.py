@@ -2,31 +2,29 @@
 # These are passed straight to widget.place(**PLACEMENT).
 
 MARGIN_X = 0.04
-MARGIN_Y = 0.03
+MARGIN_Y = 0.028
 
 LOGO_PLACEMENT = dict(
-    relx=MARGIN_X, rely=MARGIN_Y, relwidth=0.42, relheight=0.08, anchor="nw")
+    relx=MARGIN_X, rely=MARGIN_Y, relwidth=0.40, relheight=0.06, anchor="nw")
 
 UPLOAD_BUTTON_PLACEMENT = dict(
-    relx=1 - MARGIN_X, rely=MARGIN_Y, relwidth=0.28, relheight=0.08, anchor="ne")
+    relx=1 - MARGIN_X, rely=MARGIN_Y, relwidth=0.32, relheight=0.07, anchor="ne")
 
+# Pasuk sits light above the trop stage — secondary, not a hero card.
 PASUK_DISPLAY_PLACEMENT = dict(
-    relx=MARGIN_X, rely=0.14, relwidth=1 - 2 * MARGIN_X, relheight=0.42, anchor="nw")
+    relx=MARGIN_X, rely=0.10, relwidth=1 - 2 * MARGIN_X, relheight=0.12, anchor="nw")
 
-# Teacher play sits on the left of the pasuk, next to the Hebrew.
-TEACHER_PLAY_BUTTON_PLACEMENT = dict(
-    relx=MARGIN_X + 0.015, rely=0.33, anchor="w")
-
+# Trop graph is the main stage.
 TROP_DISPLAY_PLACEMENT = dict(
-    relx=MARGIN_X, rely=0.58, relwidth=1 - 2 * MARGIN_X, relheight=0.10, anchor="nw")
+    relx=MARGIN_X, rely=0.23, relwidth=1 - 2 * MARGIN_X, relheight=0.42, anchor="nw")
 
-# The record button's width and height are set in pixels by main.py so it
-# stays a perfect square. Only its position is given here.
-RECORD_BUTTON_PLACEMENT = dict(relx=0.5, rely=0.68, anchor="n")
-RECORD_BUTTON_HEIGHT_RATIO = 0.16   # side length as a fraction of window height
+# Bottom practice strip: teacher play, mic, student play.
+TEACHER_PLAY_BUTTON_PLACEMENT = dict(relx=0.30, rely=0.76, anchor="n")
+RECORD_BUTTON_PLACEMENT = dict(relx=0.5, rely=0.73, anchor="n")
+STUDENT_PLAY_BUTTON_PLACEMENT = dict(relx=0.70, rely=0.76, anchor="n")
 
-# Student play sits to the right of the microphone.
-STUDENT_PLAY_BUTTON_PLACEMENT = dict(relx=0.68, rely=0.72, anchor="n")
-PLAY_BUTTON_HEIGHT_RATIO = 0.09
+# Sizes are set in pixels by main.py so the buttons stay square.
+RECORD_BUTTON_HEIGHT_RATIO = 0.13
+PLAY_BUTTON_HEIGHT_RATIO = 0.075
 
-TIMER_LABEL_PLACEMENT = dict(relx=0.5, rely=0.86, anchor="n")
+TIMER_LABEL_PLACEMENT = dict(relx=0.5, rely=0.92, anchor="n")
